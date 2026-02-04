@@ -42,9 +42,9 @@
 
 
 // DEFINE VARIABLES FOR TWO LEDs AND TWO BUTTONs. LED_A, LED_B, BTN_A , BTN_B
-#define LED_A 6
+#define LED_A 21
 /* Complete all others */
-#define LED_B 8
+#define LED_B 19
 #define BTN_A 4
 
 
@@ -56,7 +56,7 @@ static const char* mqtt_server    = "www.yanacreations.com";                // B
 static uint16_t mqtt_port         = 1883;
 
 // WIFI CREDENTIALS
-const char* ssid                  = "Digicel_5G_WiFi_Q4PG"; // Add your Wi-Fi ssid
+const char* ssid                  = "Digicel_WiFi_h2Ue"; // Add your Wi-Fi ssid
 const char* password              = "c2SMzdsZ"; // Add your Wi-Fi password 
 
 // TASK HANDLES 
@@ -94,7 +94,7 @@ void toggleLED(int8_t LED);
 #endif
 
 // Temporary Variables
-uint8_t number = 0;
+uint8_t number = 0; 
 
 
 void setup() {
@@ -135,26 +135,26 @@ void loop() {
 //####################################################################
 //#                          UTIL FUNCTIONS                          #       
 //####################################################################
-void vButtonCheck( void * pvParameters )  {
-    configASSERT( ( ( uint32_t ) pvParameters ) == 1 );     
-      
+void vButtonCheck( void * pvParameters ) {
+    configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
+    
+    static unsigned long lastPressTime = 0;
+    const unsigned long debounceDelay = 300; // 300ms debounce
+    
     for( ;; ) {
         // Add code here to check if a button(S) is pressed
-        // then execute appropriate function if a button is pressed  
-        if (digitalRead(BTN_A) == LOW){
-          unsigned long currentTime = millis();
-        // Debounce check
-        if (currentTime - lastButtonPressA > debounceDelay) {
-          lastButtonPressA = currentTime;
-          
-          Serial.println("\n>>> Button A Pressed!");
-          GDP();  // Generate, Display, and Publish
+        // then execute appropriate function if a button is pressed
+        if (digitalRead(BTN_A) == LOW) {
+            unsigned long currentTime = millis();
+            if (currentTime - lastPressTime > debounceDelay) {
+                GDP();
+                lastPressTime = currentTime;
+            }
         }
-      }
-
-        vTaskDelay(200 / portTICK_PERIOD_MS);  
+        vTaskDelay(200 / portTICK_PERIOD_MS);
     }
 }
+
 
 void vUpdate( void * pvParameters )  {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 );    
@@ -244,7 +244,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     */
 
     serializeJson(doc, message);  // Seralize / Covert JSon object to JSon string and store in char* array  
-    publish("topic", message);    // Publish to a topic that only the Frontend subscribes to.
+    publish(pubtopic, message);    // Publish to a topic that only the Frontend subscribes to.
           
   } 
 
@@ -282,6 +282,19 @@ void Display(unsigned char number){
     0b01111111, // 8: a,b,c,d,e,f,g
     0b01101111  // 9: a,b,c,d,f,g
   };
+
+    // Clear all segments first
+  digitalWrite(a, LOW);
+  digitalWrite(b, LOW);
+  digitalWrite(c, LOW);
+  digitalWrite(d, LOW);
+  digitalWrite(e, LOW);
+  digitalWrite(f, LOW);
+  digitalWrite(g, LOW);
+  digitalWrite(dp, LOW);
+  
+  delayMicroseconds(300);
+
   uint8_t segments = digits[number % 10];
   digitalWrite(a, (segments >> 0) & 1);
   digitalWrite(b, (segments >> 1) & 1);
@@ -336,6 +349,7 @@ void GDP(void){
   according to schema above
   */
   serializeJson(doc, message);  // Seralize / Covert JSon object to JSon string and store in char* array
+  Serial.println(message);
   publish(pubtopic, message);
 
 }
