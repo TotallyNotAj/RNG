@@ -2,7 +2,6 @@
 from app import app, Config, Mqtt
 
 
-
 if __name__ == "__main__":   
 
     # START MQTT CLIENT 
